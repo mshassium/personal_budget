@@ -2,15 +2,11 @@ package ru.mshassium.personalbudget.views;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Nav;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.html.Footer;
@@ -18,20 +14,11 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Header;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.RouterLink;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
-import ru.mshassium.personalbudget.views.MainLayout;
-import ru.mshassium.personalbudget.views.helloworld.HelloWorldView;
-import com.vaadin.flow.component.avatar.Avatar;
+import ru.mshassium.personalbudget.views.month_expenses.MonthExpensesView;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -117,7 +104,7 @@ public class MainLayout extends AppLayout {
 
     private List<RouterLink> createLinks() {
         MenuItemInfo[] menuItems = new MenuItemInfo[]{ //
-                new MenuItemInfo("Hello World", "la la-coins", HelloWorldView.class), //
+                new MenuItemInfo("Hello World", "la la-coins", MonthExpensesView.class), //
 
         };
         List<RouterLink> links = new ArrayList<>();

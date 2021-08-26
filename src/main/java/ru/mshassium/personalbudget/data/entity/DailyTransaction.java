@@ -1,18 +1,19 @@
 package ru.mshassium.personalbudget.data.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import ru.mshassium.personalbudget.data.AbstractEntity;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "daily_transactions")
 public class DailyTransaction extends AbstractEntity {
 
     private LocalDateTime date;
     private Integer amount;
     private String description;
     private String type;
-    private Integer user;
     private Integer spendingPeriod;
 
     public LocalDateTime getDate() {
@@ -38,12 +39,6 @@ public class DailyTransaction extends AbstractEntity {
     }
     public void setType(String type) {
         this.type = type;
-    }
-    public Integer getUser() {
-        return user;
-    }
-    public void setUser(Integer user) {
-        this.user = user;
     }
     public Integer getSpendingPeriod() {
         return spendingPeriod;

@@ -1,4 +1,4 @@
-package ru.mshassium.personalbudget.views.helloworld;
+package ru.mshassium.personalbudget.views.month_expenses;
 
 import java.util.Optional;
 
@@ -36,7 +36,7 @@ import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 @PageTitle("Hello World")
 @Route(value = "daily/:dailyTransactionID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
-public class HelloWorldView extends Div implements BeforeEnterObserver {
+public class MonthExpensesView extends Div implements BeforeEnterObserver {
 
     private final String DAILYTRANSACTION_ID = "dailyTransactionID";
     private final String DAILYTRANSACTION_EDIT_ROUTE_TEMPLATE = "daily/%d/edit";
@@ -48,11 +48,11 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
     private TextField amount;
     private TextField description;
     private TextField type;
-    private TextField user;
     private TextField spendingPeriod;
 
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Save");
+    private Button delete = new Button("Delete");
 
     private BeanValidationBinder<DailyTransaction> binder;
 
@@ -60,7 +60,7 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
 
     private DailyTransactionService dailyTransactionService;
 
-    public HelloWorldView(@Autowired DailyTransactionService dailyTransactionService) {
+    public MonthExpensesView(@Autowired DailyTransactionService dailyTransactionService) {
         addClassNames("hello-world-view", "flex", "flex-col", "h-full");
         this.dailyTransactionService = dailyTransactionService;
         // Create UI
@@ -78,7 +78,6 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
         grid.addColumn("amount").setAutoWidth(true);
         grid.addColumn("description").setAutoWidth(true);
         grid.addColumn("type").setAutoWidth(true);
-        grid.addColumn("user").setAutoWidth(true);
         grid.addColumn("spendingPeriod").setAutoWidth(true);
         grid.setDataProvider(new CrudServiceDataProvider<>(dailyTransactionService));
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
@@ -90,7 +89,7 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
                 UI.getCurrent().navigate(String.format(DAILYTRANSACTION_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
             } else {
                 clearForm();
-                UI.getCurrent().navigate(HelloWorldView.class);
+                UI.getCurrent().navigate(MonthExpensesView.class);
             }
         });
 
@@ -100,7 +99,6 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
         // Bind fields. This where you'd define e.g. validation rules
         binder.forField(id).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("id");
         binder.forField(amount).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("amount");
-        binder.forField(user).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("user");
         binder.forField(spendingPeriod).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
                 .bind("spendingPeriod");
 
@@ -122,7 +120,24 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
                 clearForm();
                 refreshGrid();
                 Notification.show("DailyTransaction details stored.");
-                UI.getCurrent().navigate(HelloWorldView.class);
+                UI.getCurrent().navigate(MonthExpensesView.class);
+            } catch (ValidationException validationException) {
+                Notification.show("An exception happened while trying to store the dailyTransaction details.");
+            }
+        });
+
+        delete.addClickListener(e -> {
+            try {
+                if (this.dailyTransaction == null) {
+                    return;
+                }
+                binder.writeBean(this.dailyTransaction);
+
+                dailyTransactionService.delete(this.dailyTransaction.getId());
+                clearForm();
+                refreshGrid();
+                Notification.show("DailyTransaction deleted.");
+                UI.getCurrent().navigate(MonthExpensesView.class);
             } catch (ValidationException validationException) {
                 Notification.show("An exception happened while trying to store the dailyTransaction details.");
             }
@@ -144,7 +159,7 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
                 // when a row is selected but the data is no longer available,
                 // refresh grid
                 refreshGrid();
-                event.forwardTo(HelloWorldView.class);
+                event.forwardTo(MonthExpensesView.class);
             }
         }
     }
@@ -165,9 +180,9 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
         amount = new TextField("Amount");
         description = new TextField("Description");
         type = new TextField("Type");
-        user = new TextField("User");
+
         spendingPeriod = new TextField("Spending Period");
-        Component[] fields = new Component[]{id, date, amount, description, type, user, spendingPeriod};
+        Component[] fields = new Component[]{id, date, amount, description, type, spendingPeriod};
 
         for (Component field : fields) {
             ((HasStyle) field).addClassName("full-width");
@@ -185,7 +200,8 @@ public class HelloWorldView extends Div implements BeforeEnterObserver {
         buttonLayout.setSpacing(true);
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        buttonLayout.add(save, cancel);
+        delete.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        buttonLayout.add(save, cancel,delete);
         editorLayoutDiv.add(buttonLayout);
     }
 

@@ -38,7 +38,6 @@ public class DataGenerator {
             dailyTransactionRepositoryGenerator.setData(DailyTransaction::setAmount, DataType.NUMBER_UP_TO_100);
             dailyTransactionRepositoryGenerator.setData(DailyTransaction::setDescription, DataType.WORD);
             dailyTransactionRepositoryGenerator.setData(DailyTransaction::setType, DataType.WORD);
-            dailyTransactionRepositoryGenerator.setData(DailyTransaction::setUser, DataType.NUMBER_UP_TO_100);
             dailyTransactionRepositoryGenerator.setData(DailyTransaction::setSpendingPeriod, DataType.NUMBER_UP_TO_100);
             dailyTransactionRepository.saveAll(dailyTransactionRepositoryGenerator.create(100, seed));
 
