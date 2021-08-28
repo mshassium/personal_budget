@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Bean;
 import com.vaadin.exampledata.DataType;
 import com.vaadin.exampledata.ExampleDataGenerator;
 
-@SpringComponent
+//@SpringComponent
 public class DataGenerator {
 
-    @Bean
+//    @Bean
     public CommandLineRunner loadData(DailyTransactionRepository dailyTransactionRepository) {
         return args -> {
             Logger logger = LoggerFactory.getLogger(getClass());
