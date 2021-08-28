@@ -1,1 +1,1 @@
-web: java -jar -Dserver.port=$PORT ./target/personalbudget-1.0-SNAPSHOT.jar -Pproduction
+web: spring-boot:start -P production -Dserver.port=$PORT

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 /**
  * @author <a href="mailto:khamitov-rail@yandex-team.ru">Rail Khamitov</a>
@@ -18,9 +19,7 @@ import lombok.Setter;
 @Builder
 public class DailyTransactionViewModel {
     private final Long id;
-    private final LocalDateTime date;
-    private final Integer estimatedSpending;
-    private final Integer estimatedBalance;
+    private final String date;
     private final Integer amountPerDay;
     private final Integer spendPerDay;
     private final Integer balancePerDay;

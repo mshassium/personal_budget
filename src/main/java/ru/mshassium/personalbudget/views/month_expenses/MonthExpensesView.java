@@ -1,6 +1,7 @@
 package ru.mshassium.personalbudget.views.month_expenses;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,8 +23,10 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.converter.Converter;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.provider.ListDataProvider;
+import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -76,8 +79,6 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         // Configure Grid
 //        grid.addColumn("id").setAutoWidth(true);
         grid.addColumn("date").setAutoWidth(true);
-        grid.addColumn("estimatedSpending").setAutoWidth(true);
-        grid.addColumn("estimatedBalance").setAutoWidth(true);
         grid.addColumn("amountPerDay").setAutoWidth(true);
         grid.addColumn("spendPerDay").setAutoWidth(true);
         grid.addColumn("balancePerDay").setAutoWidth(true);
@@ -85,7 +86,7 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         grid.addColumn("adjustment").setAutoWidth(true);
         grid.addColumn("description").setAutoWidth(true);
 //        grid.setDataProvider(new CrudServiceDataProvider<>(dailyTransactionService));
-        grid.setDataProvider(new ListDataProvider(getDailyTransactionView()));
+        grid.setDataProvider(new ListDataProvider<>(getDailyTransactionView()));
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         grid.setHeightFull();
 
@@ -169,11 +170,12 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
                     Integer day = transactionEntry.getKey();
                     List<DailyTransaction> transactions = transactionEntry.getValue();
                     Integer spendPerDay = transactions.stream().map(DailyTransaction::getAmount).reduce(0, Integer::sum);
-                    String descriptions = transactions.stream().map(DailyTransaction::getDescription).reduce("",
-                            (str1, str2) -> str1 + ";" + str2);
+                    String descriptions = transactions.stream().map(DailyTransaction::getDescription).collect(Collectors.joining(";"));
+                    LocalDateTime localDateTime = LocalDateTime.now().withDayOfMonth(day);
+                    String dateString = localDateTime.format(DateTimeFormatter.ofPattern("dd/MM"));
                     return DailyTransactionViewModel.builder()
                             .spendPerDay(spendPerDay)
-                            .date(LocalDateTime.now().withDayOfMonth(day))
+                            .date(dateString)
                             .description(descriptions)
                             .build();
                 })
