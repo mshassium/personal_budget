@@ -1,15 +1,17 @@
 package ru.mshassium.personalbudget.views.month_expenses;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-
-import ru.mshassium.personalbudget.data.entity.DailyTransaction;
-import ru.mshassium.personalbudget.data.service.DailyTransactionService;
+import java.util.stream.Collectors;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.HasStyle;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -17,23 +19,25 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.converter.StringToIntegerConverter;
+import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.vaadin.artur.helpers.CrudServiceDataProvider;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
-import ru.mshassium.personalbudget.views.MainLayout;
+import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
-import com.vaadin.flow.component.textfield.TextField;
-import java.time.Duration;
-import com.vaadin.flow.data.converter.StringToIntegerConverter;
-import com.vaadin.flow.component.datetimepicker.DateTimePicker;
+import org.springframework.beans.factory.annotation.Autowired;
+import ru.mshassium.personalbudget.data.entity.DailyTransaction;
+import ru.mshassium.personalbudget.data.service.DailyTransactionService;
+import ru.mshassium.personalbudget.views.MainLayout;
+import ru.mshassium.personalbudget.views.model.DailyTransactionViewModel;
 
-@PageTitle("Hello World")
+import static java.util.stream.Collectors.groupingBy;
+
+@PageTitle("Month Expenses")
 @Route(value = "daily/:dailyTransactionID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 public class MonthExpensesView extends Div implements BeforeEnterObserver {
@@ -41,22 +45,19 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
     private final String DAILYTRANSACTION_ID = "dailyTransactionID";
     private final String DAILYTRANSACTION_EDIT_ROUTE_TEMPLATE = "daily/%d/edit";
 
-    private Grid<DailyTransaction> grid = new Grid<>(DailyTransaction.class, false);
+    private Grid<DailyTransactionViewModel> grid = new Grid<>(DailyTransactionViewModel.class, false);
 
-    private TextField id;
     private DateTimePicker date;
     private TextField amount;
     private TextField description;
-    private TextField type;
-    private TextField spendingPeriod;
 
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Save");
     private Button delete = new Button("Delete");
 
-    private BeanValidationBinder<DailyTransaction> binder;
-
     private DailyTransaction dailyTransaction;
+
+    private BeanValidationBinder<DailyTransaction> binder;
 
     private DailyTransactionService dailyTransactionService;
 
@@ -73,13 +74,18 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("id").setAutoWidth(true);
+//        grid.addColumn("id").setAutoWidth(true);
         grid.addColumn("date").setAutoWidth(true);
-        grid.addColumn("amount").setAutoWidth(true);
+        grid.addColumn("estimatedSpending").setAutoWidth(true);
+        grid.addColumn("estimatedBalance").setAutoWidth(true);
+        grid.addColumn("amountPerDay").setAutoWidth(true);
+        grid.addColumn("spendPerDay").setAutoWidth(true);
+        grid.addColumn("balancePerDay").setAutoWidth(true);
+        grid.addColumn("balancePerMonth").setAutoWidth(true);
+        grid.addColumn("adjustment").setAutoWidth(true);
         grid.addColumn("description").setAutoWidth(true);
-        grid.addColumn("type").setAutoWidth(true);
-        grid.addColumn("spendingPeriod").setAutoWidth(true);
-        grid.setDataProvider(new CrudServiceDataProvider<>(dailyTransactionService));
+//        grid.setDataProvider(new CrudServiceDataProvider<>(dailyTransactionService));
+        grid.setDataProvider(new ListDataProvider(getDailyTransactionView()));
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         grid.setHeightFull();
 
@@ -97,10 +103,12 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         binder = new BeanValidationBinder<>(DailyTransaction.class);
 
         // Bind fields. This where you'd define e.g. validation rules
-        binder.forField(id).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("id");
-        binder.forField(amount).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("amount");
-        binder.forField(spendingPeriod).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("spendingPeriod");
+        binder.forField(amount)
+                .withConverter(new StringToIntegerConverter("Only numbers are allowed"))
+                .bind("amount");
+        binder.forField(date).bind("date");
+        binder.forField(description).bind("description");
+
 
         binder.bindInstanceFields(this);
 
@@ -112,10 +120,12 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         save.addClickListener(e -> {
             try {
                 if (this.dailyTransaction == null) {
-                    this.dailyTransaction = new DailyTransaction();
+                    this.dailyTransaction = DailyTransaction.builder().build();
                 }
                 binder.writeBean(this.dailyTransaction);
-
+                if (dailyTransaction.getDate() == null) {
+                    dailyTransaction.setDate(LocalDateTime.now());
+                }
                 dailyTransactionService.update(this.dailyTransaction);
                 clearForm();
                 refreshGrid();
@@ -143,6 +153,31 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
             }
         });
 
+    }
+
+    private List<DailyTransactionViewModel> getDailyTransactionView() {
+        List<DailyTransaction> allForPeriod =
+                dailyTransactionService.getAllForPeriod(LocalDateTime.now().minusDays(1),
+                        LocalDateTime.now().plusDays(1));
+        Map<Integer, List<DailyTransaction>> transactionsPerDay =
+                allForPeriod.stream().collect(groupingBy(trans -> trans.getDate().getDayOfMonth()));
+
+        return transactionsPerDay
+                .entrySet()
+                .stream()
+                .map(transactionEntry -> {
+                    Integer day = transactionEntry.getKey();
+                    List<DailyTransaction> transactions = transactionEntry.getValue();
+                    Integer spendPerDay = transactions.stream().map(DailyTransaction::getAmount).reduce(0, Integer::sum);
+                    String descriptions = transactions.stream().map(DailyTransaction::getDescription).reduce("",
+                            (str1, str2) -> str1 + ";" + str2);
+                    return DailyTransactionViewModel.builder()
+                            .spendPerDay(spendPerDay)
+                            .date(LocalDateTime.now().withDayOfMonth(day))
+                            .description(descriptions)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -174,15 +209,11 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        id = new TextField("Id");
-        date = new DateTimePicker("Date");
-        date.setStep(Duration.ofSeconds(1));
         amount = new TextField("Amount");
+        amount.setRequired(true);
+        date = new DateTimePicker("Date");
         description = new TextField("Description");
-        type = new TextField("Type");
-
-        spendingPeriod = new TextField("Spending Period");
-        Component[] fields = new Component[]{id, date, amount, description, type, spendingPeriod};
+        Component[] fields = new Component[]{date, amount, description};
 
         for (Component field : fields) {
             ((HasStyle) field).addClassName("full-width");
@@ -201,7 +232,7 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         delete.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        buttonLayout.add(save, cancel,delete);
+        buttonLayout.add(save, cancel, delete);
         editorLayoutDiv.add(buttonLayout);
     }
 
