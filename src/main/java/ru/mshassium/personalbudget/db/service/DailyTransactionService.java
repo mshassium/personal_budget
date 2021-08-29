@@ -1,16 +1,16 @@
-package ru.mshassium.personalbudget.data.service;
-
-import org.springframework.data.jpa.repository.Query;
-import ru.mshassium.personalbudget.data.entity.DailyTransaction;
+package ru.mshassium.personalbudget.db.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.vaadin.artur.helpers.CrudService;
+import ru.mshassium.personalbudget.db.entity.DailyTransactions;
+import ru.mshassium.personalbudget.db.repository.DailyTransactionRepository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class DailyTransactionService extends CrudService<DailyTransaction, Integer> {
+public class DailyTransactionService extends CrudService<DailyTransactions, Integer> {
 
     private DailyTransactionRepository repository;
 
@@ -23,7 +23,7 @@ public class DailyTransactionService extends CrudService<DailyTransaction, Integ
         return repository;
     }
 
-    public List<DailyTransaction> getAllForPeriod(LocalDateTime from, LocalDateTime to){
+    public List<DailyTransactions> getAllForPeriod(LocalDateTime from, LocalDateTime to){
         return repository.getAllForPeriod(from, to);
     }
 

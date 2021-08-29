@@ -1,12 +1,5 @@
 package ru.mshassium.personalbudget.views.month_expenses;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.UI;
@@ -23,20 +16,22 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.data.converter.Converter;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.function.SerializableFunction;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.router.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.mshassium.personalbudget.data.entity.DailyTransaction;
-import ru.mshassium.personalbudget.data.service.DailyTransactionService;
+import ru.mshassium.personalbudget.db.entity.DailyTransactions;
+import ru.mshassium.personalbudget.db.service.DailyTransactionService;
 import ru.mshassium.personalbudget.views.MainLayout;
 import ru.mshassium.personalbudget.views.model.DailyTransactionViewModel;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -58,9 +53,9 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
     private Button save = new Button("Save");
     private Button delete = new Button("Delete");
 
-    private DailyTransaction dailyTransaction;
+    private DailyTransactions dailyTransaction;
 
-    private BeanValidationBinder<DailyTransaction> binder;
+    private BeanValidationBinder<DailyTransactions> binder;
 
     private DailyTransactionService dailyTransactionService;
 
@@ -101,7 +96,7 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         });
 
         // Configure Form
-        binder = new BeanValidationBinder<>(DailyTransaction.class);
+        binder = new BeanValidationBinder<>(DailyTransactions.class);
 
         // Bind fields. This where you'd define e.g. validation rules
         binder.forField(amount)
@@ -121,7 +116,7 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         save.addClickListener(e -> {
             try {
                 if (this.dailyTransaction == null) {
-                    this.dailyTransaction = DailyTransaction.builder().build();
+                    this.dailyTransaction = DailyTransactions.builder().build();
                 }
                 binder.writeBean(this.dailyTransaction);
                 if (dailyTransaction.getDate() == null) {
@@ -144,7 +139,7 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
                 }
                 binder.writeBean(this.dailyTransaction);
 
-                dailyTransactionService.delete(this.dailyTransaction.getId());
+//                dailyTransactionService.delete(this.dailyTransaction.getId());
                 clearForm();
                 refreshGrid();
                 Notification.show("DailyTransaction deleted.");
@@ -157,36 +152,36 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
     }
 
     private List<DailyTransactionViewModel> getDailyTransactionView() {
-        List<DailyTransaction> allForPeriod =
+        List<DailyTransactions> allForPeriod =
                 dailyTransactionService.getAllForPeriod(LocalDateTime.now().minusDays(1),
                         LocalDateTime.now().plusDays(1));
-        Map<Integer, List<DailyTransaction>> transactionsPerDay =
+        Map<Integer, List<DailyTransactions>> transactionsPerDay =
                 allForPeriod.stream().collect(groupingBy(trans -> trans.getDate().getDayOfMonth()));
-
-        return transactionsPerDay
-                .entrySet()
-                .stream()
-                .map(transactionEntry -> {
-                    Integer day = transactionEntry.getKey();
-                    List<DailyTransaction> transactions = transactionEntry.getValue();
-                    Integer spendPerDay = transactions.stream().map(DailyTransaction::getAmount).reduce(0, Integer::sum);
-                    String descriptions = transactions.stream().map(DailyTransaction::getDescription).collect(Collectors.joining(";"));
-                    LocalDateTime localDateTime = LocalDateTime.now().withDayOfMonth(day);
-                    String dateString = localDateTime.format(DateTimeFormatter.ofPattern("dd/MM"));
-                    return DailyTransactionViewModel.builder()
-                            .spendPerDay(spendPerDay)
-                            .date(dateString)
-                            .description(descriptions)
-                            .build();
-                })
-                .collect(Collectors.toList());
+    return Collections.EMPTY_LIST;
+//        return transactionsPerDay
+//                .entrySet()
+//                .stream()
+//                .map(transactionEntry -> {
+//                    Integer day = transactionEntry.getKey();
+//                    List<DailyTransactions> transactions = transactionEntry.getValue();
+//                    Integer spendPerDay = transactions.stream().map(DailyTransactions::getAmount).reduce(0, Integer::sum);
+//                    String descriptions = transactions.stream().map(DailyTransactions::getDescription).collect(Collectors.joining(";"));
+//                    LocalDateTime localDateTime = LocalDateTime.now().withDayOfMonth(day);
+//                    String dateString = localDateTime.format(DateTimeFormatter.ofPattern("dd/MM"));
+//                    return DailyTransactionViewModel.builder()
+//                            .spendPerDay(spendPerDay)
+//                            .date(dateString)
+//                            .description(descriptions)
+//                            .build();
+//                })
+//                .collect(Collectors.toList());
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         Optional<Integer> dailyTransactionId = event.getRouteParameters().getInteger(DAILYTRANSACTION_ID);
         if (dailyTransactionId.isPresent()) {
-            Optional<DailyTransaction> dailyTransactionFromBackend = dailyTransactionService
+            Optional<DailyTransactions> dailyTransactionFromBackend = dailyTransactionService
                     .get(dailyTransactionId.get());
             if (dailyTransactionFromBackend.isPresent()) {
                 populateForm(dailyTransactionFromBackend.get());
@@ -255,7 +250,7 @@ public class MonthExpensesView extends Div implements BeforeEnterObserver {
         populateForm(null);
     }
 
-    private void populateForm(DailyTransaction value) {
+    private void populateForm(DailyTransactions value) {
         this.dailyTransaction = value;
         binder.readBean(this.dailyTransaction);
 
