@@ -47,5 +47,12 @@ public class Wallet {
     @OneToMany(mappedBy = "wallet")
     private Set<DailyTransactions> dailyTransactions;
 
+    public Wallet(Long id) {
+        this.id = id;
+    }
 
+    @Override
+    public String toString() {
+        return id.toString();
+    }
 }
